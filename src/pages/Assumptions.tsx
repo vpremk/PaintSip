@@ -1,68 +1,141 @@
 import React from 'react'
 import { useForm, Controller } from 'react-hook-form'
-import { Box, Button, Grid, TextField, Typography, Card, CardContent } from '@mui/material'
+import {
+  Box,
+  Button,
+  Grid,
+  TextField,
+  Typography,
+  Card,
+  CardContent,
+  Accordion,
+  AccordionSummary,
+  AccordionDetails,
+} from '@mui/material'
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
 import { useStore } from '../store/useStore'
 import prodAssumptionsJson from '../data/prodAssumptions.json'
+import { Assumptions } from '../types'
 
-const renderProductionValues = (obj: Record<string, any>, title?: string, depth = 0): React.ReactNode => {
-  const entries = Object.entries(obj)
+const cloneDeep = <T,>(value: T): T => JSON.parse(JSON.stringify(value))
 
-  return (
-    <Box sx={{ display: 'grid', gap: 1.5, mt: depth === 0 ? 0 : 1 }}>
-      {entries.map(([key, value]) => {
-        if (typeof value === 'number' || typeof value === 'string') {
-          return (
-            <TextField
-              key={`${title ?? 'group'}-${key}`}
-              label={key}
-              value={value}
-              size="small"
-              InputProps={{ readOnly: true }}
-              fullWidth
-            />
-          )
-        }
+const mapProdToAssumptions = (prod: any): Assumptions => ({
+  revenue: {
+    ticketPrice: Number(prod?.revenue?.ticketPrice ?? 35),
+    guestsPerEvent: Number(prod?.revenue?.guestsPerEvent ?? 20),
+    eventsPerWeek: Number(prod?.revenue?.eventsPerWeek ?? 3),
+    weeksPerMonth: Number(prod?.revenue?.weeksPerMonth ?? 4),
+    privatePerMonth: Number(prod?.revenue?.privatePerMonth ?? 1),
+    corporatePerMonth: Number(prod?.revenue?.corporatePerMonth ?? 2),
+    airbnbPerMonth: Number(prod?.revenue?.airbnbPerMonth ?? 2),
+    merchPerMonth: Number(prod?.revenue?.merchPerMonth ?? 200),
+    giftCardPerMonth: Number(prod?.revenue?.giftCardPerMonth ?? 300),
+    tipsPerGuest: Number(prod?.revenue?.tipsPerGuest ?? 2),
+  },
+  cogs: {
+    canvas: Number(prod?.cogs?.canvas ?? 4),
+    paint: Number(prod?.cogs?.acrylicPaint ?? 0.9),
+    brushes: Number(prod?.cogs?.brushes ?? 0.4),
+    palette: Number(prod?.cogs?.paintPalette ?? 0.35),
+    snacks: Number(prod?.cogs?.snacks ?? 1),
+    wine: Number(prod?.cogs?.wineRefreshments ?? 2.5),
+    cleaning: Number(prod?.cogs?.cleaningSupplies ?? 0.4),
+  },
+  fixed: {
+    rent: Number(prod?.fixed?.rent ?? 3850),
+    payroll: Number(prod?.fixed?.breakdown?.Payroll?.['Total Payroll'] ?? 8600),
+    marketing: 500,
+    insurance: Number(prod?.fixed?.breakdown?.['Insurance & Legal']?.Total ?? 600),
+    utilities: Number(prod?.fixed?.breakdown?.['Office Expenses']?.Internet ?? 100) + Number(prod?.fixed?.breakdown?.['Office Expenses']?.Phone ?? 75),
+    technology: Number(prod?.fixed?.breakdown?.Technology?.['Total Technology'] ?? 1008),
+    miscellaneous: Number(prod?.fixed?.breakdown?.Transportation?.Total ?? 350) + Number(prod?.fixed?.breakdown?.['Equipment (Capital Assets)']?.Total ?? 125) + Number(prod?.fixed?.breakdown?.Miscellaneous?.Total ?? 255),
+  },
+  purchase: {
+    purchasePrice: Number(prod?.purchase?.purchasePrice ?? 55000),
+    transferFee: Number(prod?.purchase?.transferFee ?? 12500),
+    refreshCost: Number(prod?.purchase?.refreshCost ?? 2250),
+  },
+})
 
-        if (value && typeof value === 'object') {
-          return (
-            <Card key={`${title ?? 'group'}-${key}`} variant="outlined" sx={{ p: 1, backgroundColor: depth === 0 ? 'rgba(0,0,0,0.01)' : 'transparent' }}>
-              <CardContent sx={{ p: 1, '&:last-child': { pb: 1 } }}>
-                <Typography variant="subtitle2" sx={{ mb: 1 }}>{key}</Typography>
-                {renderProductionValues(value as Record<string, any>, key, depth + 1)}
-              </CardContent>
-            </Card>
-          )
-        }
-
-        return null
-      })}
-    </Box>
-  )
-}
+const prodSections = [
+  {
+    title: 'Revenue',
+    sectionKey: 'revenue',
+    keys: ['ticketPrice','guestsPerEvent','eventsPerWeek','weeksPerMonth','privatePerMonth','corporatePerMonth','airbnbPerMonth','birthdayPartiesPerMonth','merchPerMonth','giftCardPerMonth','tipsPerGuest'],
+  },
+  {
+    title: 'COGS',
+    sectionKey: 'cogs',
+    keys: ['canvas','acrylicPaint','brushes','easels','paintPalette','apronLaundry','tableCovers','paperTowels','waterCups','cleaningSupplies','disposableGloves','packaging','printouts','snacks','wineRefreshments','shippingKits'],
+  },
+  {
+    title: 'Fixed Expenses',
+    sectionKey: 'fixed',
+    keys: ['rent','cleaning','storage','managerPayroll','artistInstructorPayroll','assistantInstructorPayroll','eventHelpersPayroll','bookkeeperPayroll','contractorPayroll','bookingSoftware','website','paymentProcessing','pos','zoom','crm','generalLiabilityInsurance','businessInsurance','llcFees','licenses','accounting','taxPrep','printer','ink','officeSupplies','internet','phone','computerEquipment','mileage','fuel','parking','tolls','vehicleMaintenance','easels','foldingTables','chairs','lighting','speakers','microphone','projector','storageBins','bankFees','creditCardFees','refunds','membershipFees','professionalDevelopment','eventPermits'],
+  },
+  {
+    title: 'Purchase',
+    sectionKey: 'purchase',
+    keys: ['purchasePrice','transferFee','refreshCost','initialInvestment'],
+  },
+]
 
 export default function Assumptions(){
-  const active = useStore(s => s.active)
-  const assumptions = useStore(s => s.scenarios[active])
-  const update = useStore(s => s.updateAssumptions)
-
+  const active = useStore((s) => s.active)
+  const assumptions = useStore((s) => s.scenarios[active])
+  const update = useStore((s) => s.updateAssumptions)
   const { control, handleSubmit, reset } = useForm({ defaultValues: assumptions })
+  const [expanded, setExpanded] = React.useState(true)
+  const [prodValues, setProdValues] = React.useState(cloneDeep(prodAssumptionsJson as any))
 
-  React.useEffect(()=> reset(assumptions), [assumptions, reset])
+  React.useEffect(() => reset(assumptions), [assumptions, reset])
 
-  const onSubmit = (data:any) => {
+  const onSubmit = (data: any) => {
     update(active, data)
+  }
+
+  const handleProdChange = (section: string, key: string, next: string) => {
+    const nextValues = cloneDeep(prodValues) as Record<string, any>
+    const sectionValues = nextValues[section] as Record<string, any>
+    sectionValues[key] = next === '' ? 0 : Number(next)
+    setProdValues(nextValues)
+    update(active, mapProdToAssumptions(nextValues))
   }
 
   return (
     <div>
-      <Typography variant="h4" gutterBottom>Assumptions — {active}</Typography>
+      <Typography variant="h4" gutterBottom>
+        Assumptions — {active}
+      </Typography>
 
-      <Card sx={{ mb: 3 }}>
-        <CardContent>
-          <Typography variant="h6" gutterBottom>Production Assumptions (prodAssumptions.json)</Typography>
-          {renderProductionValues(prodAssumptionsJson as Record<string, any>)}
-        </CardContent>
-      </Card>
+      <Accordion expanded={expanded} onChange={() => setExpanded(!expanded)} sx={{ mb: 3 }}>
+        <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+          <Typography variant="h6">Production Assumptions (prodAssumptions.json)</Typography>
+        </AccordionSummary>
+        <AccordionDetails>
+          {prodSections.map((group) => (
+            <Box key={group.title} sx={{ mb: 3 }}>
+              <Typography variant="subtitle1" sx={{ mb: 1 }}>{group.title}</Typography>
+              <Grid container spacing={1.5}>
+                {group.keys.map((key) => (
+                  <Grid item xs={12} sm={6} md={4} key={`${group.title}-${key}`}>
+                    <TextField
+                      label={key}
+                      value={prodValues[group.sectionKey]?.[key] ?? 0}
+                      fullWidth
+                      size="small"
+                      type="number"
+                      onChange={(e) => {
+                        handleProdChange(group.sectionKey, key, e.target.value)
+                      }}
+                    />
+                  </Grid>
+                ))}
+              </Grid>
+            </Box>
+          ))}
+        </AccordionDetails>
+      </Accordion>
 
       <form onBlur={handleSubmit(onSubmit)}>
         <Grid container spacing={2}>
@@ -70,12 +143,16 @@ export default function Assumptions(){
             <Card>
               <CardContent>
                 <Typography variant="h6">Revenue</Typography>
-                <Grid container spacing={1} sx={{mt:1}}>
-                  {Object.entries(assumptions.revenue).map(([k,v])=> (
+                <Grid container spacing={1} sx={{ mt: 1 }}>
+                  {Object.entries(assumptions.revenue).map(([k, v]) => (
                     <Grid item xs={12} sm={6} key={k}>
-                      <Controller name={`revenue.${k}` as any} control={control} render={({field})=> (
-                        <TextField {...field} label={k} fullWidth type="number" />
-                      )} />
+                      <Controller
+                        name={`revenue.${k}` as any}
+                        control={control}
+                        render={({ field }) => (
+                          <TextField {...field} label={k} fullWidth type="number" />
+                        )}
+                      />
                     </Grid>
                   ))}
                 </Grid>
@@ -87,46 +164,58 @@ export default function Assumptions(){
             <Card>
               <CardContent>
                 <Typography variant="h6">COGS per Guest</Typography>
-                <Grid container spacing={1} sx={{mt:1}}>
-                  {Object.entries(assumptions.cogs).map(([k,v])=> (
+                <Grid container spacing={1} sx={{ mt: 1 }}>
+                  {Object.entries(assumptions.cogs).map(([k, v]) => (
                     <Grid item xs={12} sm={6} key={k}>
-                      <Controller name={`cogs.${k}` as any} control={control} render={({field})=> (
-                        <TextField {...field} label={k} fullWidth type="number" />
-                      )} />
+                      <Controller
+                        name={`cogs.${k}` as any}
+                        control={control}
+                        render={({ field }) => (
+                          <TextField {...field} label={k} fullWidth type="number" />
+                        )}
+                      />
                     </Grid>
                   ))}
                 </Grid>
               </CardContent>
             </Card>
 
-            <Box sx={{height:12}} />
+            <Box sx={{ height: 12 }} />
 
             <Card>
               <CardContent>
                 <Typography variant="h6">Fixed Expenses</Typography>
-                <Grid container spacing={1} sx={{mt:1}}>
-                  {Object.entries(assumptions.fixed).map(([k,v])=> (
+                <Grid container spacing={1} sx={{ mt: 1 }}>
+                  {Object.entries(assumptions.fixed).map(([k, v]) => (
                     <Grid item xs={12} sm={6} key={k}>
-                      <Controller name={`fixed.${k}` as any} control={control} render={({field})=> (
-                        <TextField {...field} label={k} fullWidth type="number" />
-                      )} />
+                      <Controller
+                        name={`fixed.${k}` as any}
+                        control={control}
+                        render={({ field }) => (
+                          <TextField {...field} label={k} fullWidth type="number" />
+                        )}
+                      />
                     </Grid>
                   ))}
                 </Grid>
               </CardContent>
             </Card>
 
-            <Box sx={{height:12}} />
+            <Box sx={{ height: 12 }} />
 
             <Card>
               <CardContent>
                 <Typography variant="h6">Purchase</Typography>
-                <Grid container spacing={1} sx={{mt:1}}>
-                  {Object.entries(assumptions.purchase).map(([k,v])=> (
+                <Grid container spacing={1} sx={{ mt: 1 }}>
+                  {Object.entries(assumptions.purchase).map(([k, v]) => (
                     <Grid item xs={12} sm={6} key={k}>
-                      <Controller name={`purchase.${k}` as any} control={control} render={({field})=> (
-                        <TextField {...field} label={k} fullWidth type="number" />
-                      )} />
+                      <Controller
+                        name={`purchase.${k}` as any}
+                        control={control}
+                        render={({ field }) => (
+                          <TextField {...field} label={k} fullWidth type="number" />
+                        )}
+                      />
                     </Grid>
                   ))}
                 </Grid>
@@ -135,9 +224,13 @@ export default function Assumptions(){
           </Grid>
         </Grid>
 
-        <Box sx={{mt:2}}>
-          <Button variant="contained" onClick={() => handleSubmit(onSubmit)()}>Save</Button>
-          <Button variant="outlined" sx={{ml:2}} onClick={()=>{ useStore.getState().reset() }}>Reset to Defaults</Button>
+        <Box sx={{ mt: 2 }}>
+          <Button variant="contained" onClick={() => handleSubmit(onSubmit)()}>
+            Save
+          </Button>
+          <Button variant="outlined" sx={{ ml: 2 }} onClick={() => useStore.getState().reset()}>
+            Reset to Defaults
+          </Button>
         </Box>
       </form>
     </div>
