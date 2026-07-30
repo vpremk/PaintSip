@@ -1,5 +1,9 @@
 import { Assumptions } from '../types'
 
+export function sumValues(obj: Record<string, number>): number {
+  return Object.values(obj).reduce((s, v) => s + (typeof v === 'number' ? v : 0), 0)
+}
+
 export function eventsPerMonth(a: Assumptions){
   return a.revenue.eventsPerWeek * a.revenue.weeksPerMonth
 }
@@ -52,7 +56,7 @@ export function grossProfit(a: Assumptions){
 }
 
 export function operatingExpenses(a: Assumptions){
-  return Object.values(a.fixed).reduce((s, v) => s + v, 0)
+  return sumValues(a.fixed)
 }
 
 export function netProfit(a: Assumptions){
