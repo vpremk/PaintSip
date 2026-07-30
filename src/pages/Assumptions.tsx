@@ -77,12 +77,29 @@ const prodSections = [
   },
 ]
 
+const getSectionTotal = (sectionKey: string, values: Record<string, any>) => {
+  const section = values[sectionKey] ?? {}
+  return Object.values(section).reduce((total: number, value) => {
+    const numeric = typeof value === 'number' ? value : Number(value ?? 0)
+    return total + (Number.isFinite(numeric) ? numeric : 0)
+  }, 0)
+}
+
+const formatNumber = (value: number) =>
+  new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(value)
+
 export default function Assumptions(){
   const active = useStore((s) => s.active)
   const assumptions = useStore((s) => s.scenarios[active])
   const update = useStore((s) => s.updateAssumptions)
   const [expanded, setExpanded] = React.useState(true)
   const [prodValues, setProdValues] = React.useState(cloneDeep(prodAssumptionsJson as any))
+  const [openSections, setOpenSections] = React.useState<Record<string, boolean>>({
+    revenue: false,
+    cogs: false,
+    fixed: false,
+    purchase: false,
+  })
 
   const handleProdChange = (section: string, key: string, next: string) => {
     const nextValues = cloneDeep(prodValues) as Record<string, any>
@@ -104,25 +121,39 @@ export default function Assumptions(){
         </AccordionSummary>
         <AccordionDetails>
           {prodSections.map((group) => (
-            <Box key={group.title} sx={{ mb: 3 }}>
-              <Typography variant="subtitle1" sx={{ mb: 1 }}>{group.title}</Typography>
-              <Grid container spacing={1.5}>
-                {group.keys.map((key) => (
-                  <Grid item xs={12} sm={6} md={4} key={`${group.title}-${key}`}>
-                    <TextField
-                      label={key}
-                      value={prodValues[group.sectionKey]?.[key] ?? 0}
-                      fullWidth
-                      size="small"
-                      type="number"
-                      onChange={(e) => {
-                        handleProdChange(group.sectionKey, key, e.target.value)
-                      }}
-                    />
-                  </Grid>
-                ))}
-              </Grid>
-            </Box>
+            <Accordion
+              key={group.title}
+              expanded={!!openSections[group.sectionKey]}
+              onChange={() => setOpenSections((prev) => ({ ...prev, [group.sectionKey]: !prev[group.sectionKey] }))}
+              sx={{ mb: 1 }}
+            >
+              <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', gap: 2 }}>
+                  <Typography variant="subtitle1">{group.title}</Typography>
+                  <Typography variant="subtitle2" color="primary.main">
+                    {formatNumber(getSectionTotal(group.sectionKey, prodValues))}
+                  </Typography>
+                </Box>
+              </AccordionSummary>
+              <AccordionDetails>
+                <Grid container spacing={1.5}>
+                  {group.keys.map((key) => (
+                    <Grid item xs={12} sm={6} md={4} key={`${group.title}-${key}`}>
+                      <TextField
+                        label={key}
+                        value={prodValues[group.sectionKey]?.[key] ?? 0}
+                        fullWidth
+                        size="small"
+                        type="number"
+                        onChange={(e) => {
+                          handleProdChange(group.sectionKey, key, e.target.value)
+                        }}
+                      />
+                    </Grid>
+                  ))}
+                </Grid>
+              </AccordionDetails>
+            </Accordion>
           ))}
         </AccordionDetails>
       </Accordion>
