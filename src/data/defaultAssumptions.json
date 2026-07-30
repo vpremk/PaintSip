@@ -1,0 +1,37 @@
+{
+  "revenue": {
+    "ticketPrice": 35,
+    "guestsPerEvent": 20,
+    "eventsPerWeek": 3,
+    "weeksPerMonth": 4,
+    "privatePerMonth": 1,
+    "corporatePerMonth": 0,
+    "airbnbPerMonth": 0,
+    "merchPerMonth": 0,
+    "giftCardPerMonth": 0,
+    "tipsPerGuest": 0
+  },
+  "cogs": {
+    "canvas": 2,
+    "paint": 1.5,
+    "brushes": 0.5,
+    "palette": 0.2,
+    "snacks": 1.5,
+    "wine": 3,
+    "cleaning": 0.3
+  },
+  "fixed": {
+    "rent": 3800,
+    "payroll": 4000,
+    "marketing": 500,
+    "insurance": 400,
+    "utilities": 300,
+    "technology": 100,
+    "miscellaneous": 200
+  },
+  "purchase": {
+    "purchasePrice": 60000,
+    "transferFee": 1200,
+    "refreshCost": 5000
+  }
+}
