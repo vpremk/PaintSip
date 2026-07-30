@@ -1,7 +1,7 @@
 import React from 'react'
 import { Card, CardContent, Grid, Typography, Table, TableHead, TableRow, TableCell, TableBody } from '@mui/material'
 import { useStore } from '../store/useStore'
-import { totalRevenue, monthlyCOGS, grossProfit, operatingExpenses, netProfit, breakEvenMonths, roiPercent, eventsPerMonth } from '../utils/calculations'
+import { totalRevenue, monthlyCOGS, grossProfit, operatingExpenses, netProfit, breakEvenMonths, roiPercent, eventsPerMonth, sumValues } from '../utils/calculations'
 
 function KPI({label, value, green=true}:{label:string,value:string|number,green?:boolean}){
   return (
@@ -45,11 +45,11 @@ export default function Dashboard(){
             </Grid>
             <Grid item xs={12} sm={6} md={3}>
               <Typography variant="subtitle2">COGS per Guest</Typography>
-              <Typography>${(Object.values(assumptions.cogs).reduce((s,v)=>s+v,0)).toFixed(2)}</Typography>
+              <Typography>${sumValues(assumptions.cogs).toFixed(2)}</Typography>
             </Grid>
             <Grid item xs={12} sm={6} md={3}>
               <Typography variant="subtitle2">Fixed Expenses</Typography>
-              <Typography>${(Object.values(assumptions.fixed).reduce((s,v)=>s+v,0)).toFixed(0)}/month</Typography>
+              <Typography>${sumValues(assumptions.fixed).toFixed(0)}/month</Typography>
             </Grid>
             <Grid item xs={12} sm={6} md={3}>
               <Typography variant="subtitle2">Total Investment</Typography>

@@ -43,7 +43,7 @@ export function totalRevenue(a: Assumptions){
 }
 
 export function cogsPerEvent(a: Assumptions){
-  const sum = Object.values(a.cogs).reduce((s, v) => s + v, 0)
+  const sum = sumValues(a.cogs)
   return sum * a.revenue.guestsPerEvent
 }
 
