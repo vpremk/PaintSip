@@ -1,7 +1,7 @@
 import React from 'react'
 import { Card, CardContent, Grid, Typography, Table, TableHead, TableRow, TableCell, TableBody } from '@mui/material'
 import { useStore } from '../store/useStore'
-import { totalRevenue, monthlyCOGS, grossProfit, operatingExpenses, netProfit, breakEvenMonths, roiPercent, eventsPerMonth, sumValues } from '../utils/calculations'
+import { totalRevenue, monthlyCOGS, grossProfit, operatingExpenses, netProfit, breakEvenMonths, roiPercent } from '../utils/calculations'
 
 function KPI({label, value, green=true}:{label:string,value:string|number,green?:boolean}){
   return (
@@ -12,6 +12,10 @@ function KPI({label, value, green=true}:{label:string,value:string|number,green?
       </CardContent>
     </Card>
   )
+}
+
+function formatCurrency(value:number){
+  return new Intl.NumberFormat('en-US', { style:'currency', currency:'USD', maximumFractionDigits: 0 }).format(value)
 }
 
 export default function Dashboard(){
@@ -28,6 +32,21 @@ export default function Dashboard(){
   const eventsPM = assumptions.revenue.eventsPerWeek * assumptions.revenue.weeksPerMonth
   const revenuePerEvent = revenue / Math.max(1, eventsPM)
 
+  const summaryRows = [
+    { label: 'Total Revenue', value: 22600 },
+    { label: 'Less COGS', value: -4700 },
+    { label: 'Gross Profit', value: 17900 },
+    { label: 'Venue Costs', value: -4250 },
+    { label: 'Payroll', value: -8600 },
+    { label: 'Technology', value: -1008 },
+    { label: 'Insurance & Legal', value: -600 },
+    { label: 'Office Expenses', value: -315 },
+    { label: 'Transportation', value: -350 },
+    { label: 'Equipment Reserve', value: -125 },
+    { label: 'Miscellaneous', value: -255 },
+    { label: 'Estimated Net Operating Profit', value: 2400 },
+  ]
+
   return (
     <div>
       <Typography variant="h4" gutterBottom>Dashboard — {active}</Typography>
@@ -35,27 +54,25 @@ export default function Dashboard(){
       {/* Assumptions Summary */}
       <Card sx={{mb:3}}>
         <CardContent>
-          <Typography variant="h6" gutterBottom>Key Assumptions</Typography>
-          <Grid container spacing={2}>
-            <Grid item xs={12} sm={6} md={3}>
-              <Typography variant="subtitle2">Revenue</Typography>
-              <Typography>${assumptions.revenue.ticketPrice}/ticket</Typography>
-              <Typography>{assumptions.revenue.guestsPerEvent} guests/event</Typography>
-              <Typography>{eventsPerMonth(assumptions)} events/month</Typography>
-            </Grid>
-            <Grid item xs={12} sm={6} md={3}>
-              <Typography variant="subtitle2">COGS per Guest</Typography>
-              <Typography>${sumValues(assumptions.cogs).toFixed(2)}</Typography>
-            </Grid>
-            <Grid item xs={12} sm={6} md={3}>
-              <Typography variant="subtitle2">Fixed Expenses</Typography>
-              <Typography>${sumValues(assumptions.fixed).toFixed(0)}/month</Typography>
-            </Grid>
-            <Grid item xs={12} sm={6} md={3}>
-              <Typography variant="subtitle2">Total Investment</Typography>
-              <Typography>${(assumptions.purchase.purchasePrice + assumptions.purchase.transferFee + assumptions.purchase.refreshCost).toFixed(0)}</Typography>
-            </Grid>
-          </Grid>
+          <Typography variant="h6" gutterBottom>Summary</Typography>
+          <Table size="small">
+            <TableHead>
+              <TableRow>
+                <TableCell>Category</TableCell>
+                <TableCell align="right">Monthly</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {summaryRows.map((row) => (
+                <TableRow key={row.label}>
+                  <TableCell>{row.label}</TableCell>
+                  <TableCell align="right" sx={{ color: row.value >= 0 ? 'success.main' : 'text.primary', fontWeight: row.label === 'Estimated Net Operating Profit' ? 700 : 400 }}>
+                    {row.value >= 0 ? '+' : '-'}{formatCurrency(Math.abs(row.value))}
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
         </CardContent>
       </Card>
 
