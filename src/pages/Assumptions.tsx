@@ -78,6 +78,12 @@ const prodSections = [
 ]
 
 const getSectionTotal = (sectionKey: string, values: Record<string, any>) => {
+  if (sectionKey === 'revenue') {
+    const revenue = values.revenue ?? {}
+    const monthlyEvents = Number(revenue.eventsPerWeek ?? 0) * Number(revenue.weeksPerMonth ?? 0)
+    return Number(revenue.ticketPrice ?? 0) * monthlyEvents
+  }
+
   const section = values[sectionKey] ?? {}
   return Object.values(section).reduce((total: number, value) => {
     const numeric = typeof value === 'number' ? value : Number(value ?? 0)
