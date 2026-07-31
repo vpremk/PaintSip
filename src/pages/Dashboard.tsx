@@ -1,7 +1,7 @@
 import React from 'react'
 import { Card, CardContent, Grid, Typography, Table, TableHead, TableRow, TableCell, TableBody } from '@mui/material'
 import { useStore } from '../store/useStore'
-import { totalRevenue, monthlyCOGS, grossProfit, operatingExpenses, netProfit, breakEvenMonths, roiPercent, totalInvestment } from '../utils/calculations'
+import { totalRevenue, monthlyCOGS, grossProfit, operatingExpenses, netProfit, breakEvenMonths, roiPercent, totalInvestment, sumValues } from '../utils/calculations'
 
 function KPI({label, value, green=true}:{label:string,value:string|number,green?:boolean}){
   return (
@@ -33,12 +33,35 @@ export default function Dashboard(){
   const eventsPM = assumptions.revenue.eventsPerWeek * assumptions.revenue.weeksPerMonth
   const revenuePerEvent = revenue / Math.max(1, eventsPM)
 
+  const cogsPerEvent = sumValues(assumptions.cogs)
+  const fixedTotal = sumValues(assumptions.fixed)
+
   const summaryRows = [
-    { label: 'Revenue', value: revenue },
-    { label: 'COGS', value: -cogs },
-    { label: 'Fixed Expenses', value: -opex },
-    { label: 'Purchase', value: investment },
-    { label: 'Estimated Net Operating Profit', value: np },
+    {
+      label: 'Revenue',
+      value: revenue,
+      formula: `${assumptions.revenue.eventsPerWeek} × ${assumptions.revenue.weeksPerMonth} × ${assumptions.revenue.guestsPerEvent} × $${assumptions.revenue.ticketPrice} = ${formatCurrency(revenue)}`,
+    },
+    {
+      label: 'COGS',
+      value: -cogs,
+      formula: `${formatCurrency(cogsPerEvent)} total COGS per event`,
+    },
+    {
+      label: 'Fixed Expenses',
+      value: -opex,
+      formula: `${formatCurrency(fixedTotal)} total monthly fixed costs`,
+    },
+    {
+      label: 'Purchase',
+      value: investment,
+      formula: `$${assumptions.purchase.purchasePrice} + $${assumptions.purchase.transferFee} + $${assumptions.purchase.refreshCost} = ${formatCurrency(investment)}`,
+    },
+    {
+      label: 'Estimated Net Operating Profit',
+      value: np,
+      formula: `${formatCurrency(np)} total net operating profit`,
+    },
   ]
 
   return (
@@ -58,7 +81,10 @@ export default function Dashboard(){
             <TableBody>
               {summaryRows.map((row) => (
                 <TableRow key={row.label}>
-                  <TableCell>{row.label}</TableCell>
+                  <TableCell>
+                    <Typography variant="body2" sx={{ fontWeight: 600 }}>{row.label}</Typography>
+                    <Typography variant="caption" color="text.secondary">{row.formula}</Typography>
+                  </TableCell>
                   <TableCell align="right" sx={{ color: row.value >= 0 ? 'success.main' : 'text.primary', fontWeight: row.label === 'Estimated Net Operating Profit' ? 700 : 400 }}>
                     {row.value >= 0 ? '+' : '-'}{formatCurrency(Math.abs(row.value))}
                   </TableCell>
