@@ -43,7 +43,7 @@ export default function Dashboard(){
       formula: `${assumptions.revenue.eventsPerWeek} × ${assumptions.revenue.weeksPerMonth} × ${assumptions.revenue.guestsPerEvent} × $${assumptions.revenue.ticketPrice} = ${formatCurrency(revenue)}`,
     },
     {
-      label: 'COGS',
+      label: 'Cost of Goods Sold (COGS)',
       value: -cogs,
       formula: `${formatCurrency(cogsPerEvent)} total COGS per event`,
     },

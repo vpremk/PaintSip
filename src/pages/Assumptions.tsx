@@ -61,7 +61,7 @@ const prodSections = [
     keys: ['ticketPrice','guestsPerEvent','eventsPerWeek','weeksPerMonth','privatePerMonth','corporatePerMonth','airbnbPerMonth','birthdayPartiesPerMonth','merchPerMonth','giftCardPerMonth','tipsPerGuest'],
   },
   {
-    title: 'COGS',
+    title: 'Cost of Goods Sold (COGS)',
     sectionKey: 'cogs',
     keys: ['canvas','acrylicPaint','brushes','easels','paintPalette','apronLaundry','tableCovers','paperTowels','waterCups','cleaningSupplies','disposableGloves','packaging','printouts','snacks','wineRefreshments','shippingKits'],
   },
@@ -77,46 +77,75 @@ const prodSections = [
   },
 ]
 
+const safeNumber = (value: unknown, fallback = 0) => {
+  const numeric = typeof value === 'number' ? value : Number(value ?? fallback)
+  return Number.isFinite(numeric) ? numeric : fallback
+}
+
+const getInvalidFields = (values: Record<string, any>, prefix = ''): string[] => {
+  const invalid: string[] = []
+
+  Object.entries(values).forEach(([key, value]) => {
+    const path = prefix ? `${prefix}.${key}` : key
+
+    if (value !== null && typeof value === 'object' && !Array.isArray(value)) {
+      invalid.push(...getInvalidFields(value, path))
+      return
+    }
+
+    if (typeof value === 'string' && value.trim() !== '' && Number.isNaN(Number(value))) {
+      invalid.push(path)
+      return
+    }
+
+    if (typeof value === 'number' && !Number.isFinite(value)) {
+      invalid.push(path)
+    }
+  })
+
+  return invalid
+}
+
 const getSectionTotal = (sectionKey: string, values: Record<string, any>) => {
   if (sectionKey === 'revenue') {
     const revenue = values.revenue ?? {}
-    const monthlyEvents = Number(revenue.eventsPerWeek ?? 0) * Number(revenue.weeksPerMonth ?? 0)
-    const guestsPerEvent = Number(revenue.guestsPerEvent ?? 0)
-    return Number(revenue.ticketPrice ?? 0) * monthlyEvents * guestsPerEvent
+    const monthlyEvents = safeNumber(revenue.eventsPerWeek) * safeNumber(revenue.weeksPerMonth)
+    const guestsPerEvent = safeNumber(revenue.guestsPerEvent)
+    return safeNumber(revenue.ticketPrice) * monthlyEvents * guestsPerEvent
   }
 
   const section = values[sectionKey] ?? {}
   return Object.values(section).reduce((total: number, value) => {
-    const numeric = typeof value === 'number' ? value : Number(value ?? 0)
-    return total + (Number.isFinite(numeric) ? numeric : 0)
+    const numeric = safeNumber(value)
+    return total + numeric
   }, 0)
 }
 
 const getSectionFormulaText = (sectionKey: string, values: Record<string, any>) => {
   const revenue = values.revenue ?? {}
   if (sectionKey === 'revenue') {
-    const monthlyEvents = Number(revenue.eventsPerWeek ?? 0) * Number(revenue.weeksPerMonth ?? 0)
-    const guestsPerEvent = Number(revenue.guestsPerEvent ?? 0)
-    const total = Number(revenue.ticketPrice ?? 0) * monthlyEvents * guestsPerEvent
-    return `${Number(revenue.eventsPerWeek ?? 0)} × ${Number(revenue.weeksPerMonth ?? 0)} × ${guestsPerEvent} × $${Number(revenue.ticketPrice ?? 0)} = ${formatNumber(total)}`
+    const monthlyEvents = safeNumber(revenue.eventsPerWeek) * safeNumber(revenue.weeksPerMonth)
+    const guestsPerEvent = safeNumber(revenue.guestsPerEvent)
+    const total = safeNumber(revenue.ticketPrice) * monthlyEvents * guestsPerEvent
+    return `${safeNumber(revenue.eventsPerWeek)} × ${safeNumber(revenue.weeksPerMonth)} × ${guestsPerEvent} × $${safeNumber(revenue.ticketPrice)} = ${formatNumber(total)}`
   }
 
   if (sectionKey === 'cogs') {
     const cogs = values.cogs ?? {}
-    const total = Object.values(cogs).reduce((sum: number, value) => sum + Number(value ?? 0), 0)
+    const total = Object.values(cogs).reduce((sum: number, value) => sum + safeNumber(value), 0)
     return `${formatNumber(total)} total COGS per event`
   }
 
   if (sectionKey === 'fixed') {
     const section = values.fixed ?? {}
-    const total = Object.values(section).reduce((sum: number, value) => sum + Number(value ?? 0), 0)
+    const total = Object.values(section).reduce((sum: number, value) => sum + safeNumber(value), 0)
     return `${formatNumber(total)} total monthly fixed costs`
   }
 
   if (sectionKey === 'purchase') {
     const purchase = values.purchase ?? {}
-    const total = Number(purchase.purchasePrice ?? 0) + Number(purchase.transferFee ?? 0) + Number(purchase.refreshCost ?? 0)
-    return `$${Number(purchase.purchasePrice ?? 0)} + $${Number(purchase.transferFee ?? 0)} + $${Number(purchase.refreshCost ?? 0)} = ${formatNumber(total)}`
+    const total = safeNumber(purchase.purchasePrice) + safeNumber(purchase.transferFee) + safeNumber(purchase.refreshCost)
+    return `$${safeNumber(purchase.purchasePrice)} + $${safeNumber(purchase.transferFee)} + $${safeNumber(purchase.refreshCost)} = ${formatNumber(total)}`
   }
 
   return ''
@@ -137,11 +166,12 @@ export default function Assumptions(){
     fixed: false,
     purchase: false,
   })
+  const invalidFields = React.useMemo(() => getInvalidFields(prodValues), [prodValues])
 
   const handleProdChange = (section: string, key: string, next: string) => {
     const nextValues = cloneDeep(prodValues) as Record<string, any>
     const sectionValues = nextValues[section] as Record<string, any>
-    sectionValues[key] = next === '' ? 0 : Number(next)
+    sectionValues[key] = next
     setProdValues(nextValues)
     update(active, mapProdToAssumptions(nextValues))
   }
@@ -151,6 +181,14 @@ export default function Assumptions(){
       <Typography variant="h4" gutterBottom>
         Assumptions — {active}
       </Typography>
+
+      {invalidFields.length > 0 && (
+        <Box sx={{ mb: 2, p: 1.5, border: '1px solid #f59e0b', borderRadius: 2, backgroundColor: '#fff7ed' }}>
+          <Typography variant="subtitle2" color="warning.main">
+            Invalid value(s): {invalidFields.join(', ')}
+          </Typography>
+        </Box>
+      )}
 
       <Accordion expanded={expanded} onChange={() => setExpanded(!expanded)} sx={{ mb: 3 }}>
         <AccordionSummary expandIcon={<ExpandMoreIcon />}>
@@ -183,13 +221,14 @@ export default function Assumptions(){
                     <Grid item xs={12} sm={6} md={4} key={`${group.title}-${key}`}>
                       <TextField
                         label={key}
-                        value={prodValues[group.sectionKey]?.[key] ?? 0}
+                        value={prodValues[group.sectionKey]?.[key] ?? ''}
                         fullWidth
                         size="small"
                         type="number"
                         onChange={(e) => {
                           handleProdChange(group.sectionKey, key, e.target.value)
                         }}
+                        error={typeof prodValues[group.sectionKey]?.[key] === 'string' && Number.isNaN(Number(prodValues[group.sectionKey]?.[key]))}
                       />
                     </Grid>
                   ))}
