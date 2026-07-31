@@ -82,11 +82,22 @@ const safeNumber = (value: unknown, fallback = 0) => {
   return Number.isFinite(numeric) ? numeric : fallback
 }
 
+const ignoredFieldPaths = new Set([
+  'scenario',
+  'notes',
+  'purchase.canvasSize',
+  'purchase.notes',
+])
+
 const getInvalidFields = (values: Record<string, any>, prefix = ''): string[] => {
   const invalid: string[] = []
 
   Object.entries(values).forEach(([key, value]) => {
     const path = prefix ? `${prefix}.${key}` : key
+
+    if (ignoredFieldPaths.has(path)) {
+      return
+    }
 
     if (value !== null && typeof value === 'object' && !Array.isArray(value)) {
       invalid.push(...getInvalidFields(value, path))
@@ -154,24 +165,124 @@ const getSectionFormulaText = (sectionKey: string, values: Record<string, any>) 
 const formatNumber = (value: number) =>
   new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(value)
 
+const assumptionsToProdValues = (source: Assumptions): Record<string, any> => ({
+  scenario: 'production',
+  notes: 'Production-grade assumptions based on a paint-and-sip studio operating model.',
+  revenue: {
+    ticketPrice: source.revenue.ticketPrice,
+    guestsPerEvent: source.revenue.guestsPerEvent,
+    eventsPerWeek: source.revenue.eventsPerWeek,
+    weeksPerMonth: source.revenue.weeksPerMonth,
+    privatePerMonth: source.revenue.privatePerMonth,
+    corporatePerMonth: source.revenue.corporatePerMonth,
+    airbnbPerMonth: source.revenue.airbnbPerMonth,
+    birthdayPartiesPerMonth: 0,
+    merchPerMonth: source.revenue.merchPerMonth,
+    giftCardPerMonth: source.revenue.giftCardPerMonth,
+    tipsPerGuest: source.revenue.tipsPerGuest,
+    sponsorshipsPerMonth: 0,
+    commissionPerMonth: 0,
+  },
+  cogs: {
+    canvas: source.cogs.canvas,
+    acrylicPaint: source.cogs.paint,
+    brushes: source.cogs.brushes,
+    easels: 0.15,
+    paintPalette: source.cogs.palette,
+    apronLaundry: 0.3,
+    tableCovers: 0.3,
+    paperTowels: 0.6,
+    waterCups: 0.25,
+    cleaningSupplies: source.cogs.cleaning,
+    disposableGloves: 0.2,
+    packaging: 0.25,
+    shippingKits: 0,
+    totalCOGSPerGuest: Object.values(source.cogs).reduce((sum, val) => sum + Number(val || 0), 0),
+    monthlyCOGS: 0,
+  },
+  fixed: {
+    rent: source.fixed.rent,
+    cleaning: 300,
+    storage: 100,
+    managerPayroll: 2000,
+    artistInstructorPayroll: 3600,
+    assistantInstructorPayroll: 1800,
+    eventHelpersPayroll: 600,
+    bookkeeperPayroll: 300,
+    contractorPayroll: 300,
+    bookingSoftware: 150,
+    website: 50,
+    paymentProcessing: 678,
+    pos: 60,
+    zoom: 20,
+    crm: 50,
+    generalLiabilityInsurance: source.fixed.insurance,
+    businessInsurance: 100,
+    llcFees: 20,
+    licenses: 30,
+    accounting: 250,
+    taxPrep: 50,
+    printer: 20,
+    ink: 20,
+    officeSupplies: 50,
+    internet: 100,
+    phone: 75,
+    computerEquipment: 50,
+    mileage: 100,
+    fuel: 120,
+    parking: 40,
+    tolls: 30,
+    vehicleMaintenance: 60,
+    easels: 30,
+    foldingTables: 20,
+    chairs: 20,
+    lighting: 15,
+    speakers: 10,
+    microphone: 5,
+    projector: 15,
+    storageBins: 10,
+    bankFees: 30,
+    creditCardFees: 0,
+    refunds: 100,
+    membershipFees: 50,
+    professionalDevelopment: 50,
+    eventPermits: 25,
+  },
+  purchase: {
+    purchasePrice: source.purchase.purchasePrice,
+    transferFee: source.purchase.transferFee,
+    refreshCost: source.purchase.refreshCost,
+    initialInvestment: source.purchase.purchasePrice + source.purchase.transferFee + source.purchase.refreshCost,
+    studioRefresh: source.purchase.refreshCost,
+    canvasSize: '11x14 acrylic',
+    employeeCount: 8,
+    notes: 'This model assumes studio purchase + transfer + refresh.',
+  },
+})
+
 export default function Assumptions(){
   const active = useStore((s) => s.active)
   const assumptions = useStore((s) => s.scenarios[active])
   const update = useStore((s) => s.updateAssumptions)
   const [expanded, setExpanded] = React.useState(true)
-  const [prodValues, setProdValues] = React.useState(cloneDeep(prodAssumptionsJson as any))
+  const [prodValues, setProdValues] = React.useState<Record<string, any>>(() => assumptionsToProdValues(assumptions))
   const [openSections, setOpenSections] = React.useState<Record<string, boolean>>({
     revenue: false,
     cogs: false,
     fixed: false,
     purchase: false,
   })
+
+  React.useEffect(() => {
+    setProdValues(assumptionsToProdValues(assumptions))
+  }, [assumptions])
+
   const invalidFields = React.useMemo(() => getInvalidFields(prodValues), [prodValues])
 
   const handleProdChange = (section: string, key: string, next: string) => {
     const nextValues = cloneDeep(prodValues) as Record<string, any>
     const sectionValues = nextValues[section] as Record<string, any>
-    sectionValues[key] = next
+    sectionValues[key] = next === '' ? 0 : Number(next)
     setProdValues(nextValues)
     update(active, mapProdToAssumptions(nextValues))
   }

@@ -1,0 +1,131 @@
+{
+  "years": {
+    "2023": {
+      "income": {
+        "Gross Sales": 275169.0,
+        "Refunds": -5753.1,
+        "Reschedules": -145.0,
+        "Discounts": -4745.7,
+        "Total Income": 264525.2
+      },
+      "expenses": {
+        "ADP Payroll Fees": 2255.03,
+        "Advertising": 3173.82,
+        "Art Supplies": 24607.23,
+        "Clearent Monthly Fee": 4989.53,
+        "Contract Labor": 3488.0,
+        "Insurance": 2807.0,
+        "Office Supplies": 519.18,
+        "Payroll": 102981.64,
+        "Payroll Taxes": 29664.31,
+        "Professional Services": 1093.5,
+        "PSE&G": 4478.29,
+        "Rent": 42720.0,
+        "Repairs/Maintenance": 903.85,
+        "Royalties and Franchise Fees": 26936.73,
+        "Studio Supplies": 4665.05,
+        "Verizon": 2137.09,
+        "Worker's Comp Insurance": 1736.92,
+        "Total Expenses": 259157.17
+      },
+      "adjustments": {
+        "Owner's Compensation (incl. in payroll)": 83200.0,
+        "Net Income / Loss": 5368.03,
+        "Net Adjusted Income / Loss": 88568.03
+      }
+    },
+    "2024": {
+      "income": {
+        "Gross Sales": 243441.02,
+        "Refunds": -3997.0,
+        "Reschedules": 0,
+        "Discounts": -4831.47,
+        "Total Income": 234612.55
+      },
+      "expenses": {
+        "Rent": 42320.0,
+        "PSE&G": 4351.9,
+        "Verizon": 2150.58,
+        "Clearent Monthly Fee": 5023.12,
+        "ADP Fees": 2347.97,
+        "Worker's Comp": 1202.99,
+        "1099 Payroll": 484.0,
+        "Intuit Monthly Fee": 740.0,
+        "LocalAct Digital/SEO Advertising": 5206.76,
+        "FB/IG Advertising": 80.22,
+        "Donations/Fundraising": 1615.0,
+        "Royalties": 23571.08,
+        "Payroll": 94431.26,
+        "Payroll Taxes": 24951.91,
+        "Canvases/Brushes/Paint/Art Supplies": 22804.18,
+        "Studio Supplies/Paper Goods/Cleaning": 3901.84,
+        "Office Supplies": 913.68,
+        "Bank Interest Fees": 413.21,
+        "Insurance": 1245.95,
+        "St. of NJ Yearly Fire Fee": 170.0,
+        "Tax Preparation": 500.0,
+        "Entertainment": 461.92,
+        "Annual Report": 78.0,
+        "HVAC Yearly Maintenance Fee": 700.0,
+        "Total Expenses": 239665.57
+      },
+      "adjustments": {
+        "Owner's Compensation (incl. in payroll)": 70000.0,
+        "Net Income / Loss": -5053.02,
+        "Net Adjusted Income / Loss": 64946.98
+      }
+    },
+    "2025": {
+      "income": {
+        "Sales": 220386.91,
+        "Total Income": 220386.91
+      },
+      "costOfGoodsSold": {
+        "Art Supplies": 17934.13,
+        "Class Supplies": 2805.98,
+        "Total Cost of Goods Sold": 20740.11
+      },
+      "summary": {
+        "Gross Profit": 199646.8
+      },
+      "expenses": {
+        "Studio Labor": 55603.03,
+        "Payroll Taxes (FUTA/SUTA/SS/Medicare)": 5447.81,
+        "Accounting / Professional Services": 1802.6,
+        "Bank Service Charges": 94.38,
+        "Business Licenses and Permits": 75.0,
+        "Franchisee Royalties": 24999.93,
+        "Insurance": 5072.11,
+        "Meals and Entertainment": 1492.0,
+        "Merchant Service Fees": 5638.1,
+        "Rent": 45789.0,
+        "Repairs and Maintenance": 822.96,
+        "Shipping and Postage": 114.22,
+        "Software": 1679.82,
+        "Studio and Office Supplies": 13190.89,
+        "Telephone and Internet": 1342.97,
+        "Transportation": 1431.51,
+        "Travel": 2.9,
+        "Utilities": 4929.31,
+        "Digital Marketing": 12936.39,
+        "Festivals and Events": 204.0,
+        "Uncategorized Expense": 700.0,
+        "Depreciation Expense": 11428.64,
+        "Amortization": 567.04,
+        "Total Expenses": 195364.61
+      },
+      "otherIncome": {
+        "Rebates": 1366.99,
+        "Total Other Income": 1366.99
+      },
+      "adjustments": {
+        "Depreciation/ Amortization": 11995.68,
+        "One-time Upgrades": 1204.0,
+        "Devices": 3674.0,
+        "Discretionary Expenses": 3127.51,
+        "Net Income / Loss": 5649.18,
+        "Net Adjusted Income / Loss": 25650.37
+      }
+    }
+  }
+}
