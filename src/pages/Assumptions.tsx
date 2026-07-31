@@ -81,7 +81,8 @@ const getSectionTotal = (sectionKey: string, values: Record<string, any>) => {
   if (sectionKey === 'revenue') {
     const revenue = values.revenue ?? {}
     const monthlyEvents = Number(revenue.eventsPerWeek ?? 0) * Number(revenue.weeksPerMonth ?? 0)
-    return Number(revenue.ticketPrice ?? 0) * monthlyEvents
+    const guestsPerEvent = Number(revenue.guestsPerEvent ?? 0)
+    return Number(revenue.ticketPrice ?? 0) * monthlyEvents * guestsPerEvent
   }
 
   const section = values[sectionKey] ?? {}
@@ -89,6 +90,36 @@ const getSectionTotal = (sectionKey: string, values: Record<string, any>) => {
     const numeric = typeof value === 'number' ? value : Number(value ?? 0)
     return total + (Number.isFinite(numeric) ? numeric : 0)
   }, 0)
+}
+
+const getSectionFormulaText = (sectionKey: string, values: Record<string, any>) => {
+  const revenue = values.revenue ?? {}
+  if (sectionKey === 'revenue') {
+    const monthlyEvents = Number(revenue.eventsPerWeek ?? 0) * Number(revenue.weeksPerMonth ?? 0)
+    const guestsPerEvent = Number(revenue.guestsPerEvent ?? 0)
+    const total = Number(revenue.ticketPrice ?? 0) * monthlyEvents * guestsPerEvent
+    return `${Number(revenue.eventsPerWeek ?? 0)} × ${Number(revenue.weeksPerMonth ?? 0)} × ${guestsPerEvent} × $${Number(revenue.ticketPrice ?? 0)} = ${formatNumber(total)}`
+  }
+
+  if (sectionKey === 'cogs') {
+    const cogs = values.cogs ?? {}
+    const total = Object.values(cogs).reduce((sum: number, value) => sum + Number(value ?? 0), 0)
+    return `${formatNumber(total)} total COGS per event`
+  }
+
+  if (sectionKey === 'fixed') {
+    const section = values.fixed ?? {}
+    const total = Object.values(section).reduce((sum: number, value) => sum + Number(value ?? 0), 0)
+    return `${formatNumber(total)} total monthly fixed costs`
+  }
+
+  if (sectionKey === 'purchase') {
+    const purchase = values.purchase ?? {}
+    const total = Number(purchase.purchasePrice ?? 0) + Number(purchase.transferFee ?? 0) + Number(purchase.refreshCost ?? 0)
+    return `$${Number(purchase.purchasePrice ?? 0)} + $${Number(purchase.transferFee ?? 0)} + $${Number(purchase.refreshCost ?? 0)} = ${formatNumber(total)}`
+  }
+
+  return ''
 }
 
 const formatNumber = (value: number) =>
@@ -135,7 +166,12 @@ export default function Assumptions(){
             >
               <AccordionSummary expandIcon={<ExpandMoreIcon />}>
                 <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', gap: 2 }}>
-                  <Typography variant="subtitle1">{group.title}</Typography>
+                  <Box>
+                    <Typography variant="subtitle1">{group.title}</Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      {getSectionFormulaText(group.sectionKey, prodValues)}
+                    </Typography>
+                  </Box>
                   <Typography variant="subtitle2" color="primary.main">
                     {formatNumber(getSectionTotal(group.sectionKey, prodValues))}
                   </Typography>
